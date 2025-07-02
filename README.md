@@ -1,3 +1,4 @@
+
 Expense Tracker App
 
 This is a simple Expense Tracker App built with React and Vite. It allows users to track their expenses by adding items to a list and viewing them in a scrollable list box. Users can also clear the entire list with a single click.
@@ -26,3 +27,5 @@ Clone the repository:
    bash
    git clone https://github.com/bishwajitkmk/Expense-Tracker-App.git
    cd Expense-Tracker-App
+
+
