@@ -1,56 +1,54 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable react/prop-types */
 import React, { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-const ExpenseForm = ({
-  onAddExpense,
-  editingExpense,
-  onUpdateExpense,
+const IncomeForm = ({
+  onAddIncome,
+  editingIncome,
+  onUpdateIncome,
   onCancelEdit,
-  categories = [],
+  sources = [],
 }) => {
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date());
-  const [category, setCategory] = useState(categories[0] || "");
-  const [customCategory, setCustomCategory] = useState("");
+  const [source, setSource] = useState(sources[0] || "");
+  const [customSource, setCustomSource] = useState("");
 
   useEffect(() => {
-    if (editingExpense) {
-      setTitle(editingExpense.title || "");
-      setAmount(editingExpense.amount || "");
-      setDate(editingExpense.date ? new Date(editingExpense.date) : new Date());
-      setCategory(editingExpense.category || categories[0] || "");
-      setCustomCategory("");
+    if (editingIncome) {
+      setTitle(editingIncome.title || "");
+      setAmount(editingIncome.amount || "");
+      setDate(editingIncome.date ? new Date(editingIncome.date) : new Date());
+      setSource(editingIncome.source || sources[0] || "");
+      setCustomSource("");
     } else {
       setTitle("");
       setAmount("");
       setDate(new Date());
-      setCategory(categories[0] || "");
-      setCustomCategory("");
+      setSource(sources[0] || "");
+      setCustomSource("");
     }
-  }, [editingExpense, categories]);
+  }, [editingIncome, sources]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const finalCategory =
-      category === "Other" && customCategory ? customCategory : category;
-    if (editingExpense) {
-      onUpdateExpense({
-        ...editingExpense,
+    const finalSource =
+      source === "Other" && customSource ? customSource : source;
+    if (editingIncome) {
+      onUpdateIncome({
+        ...editingIncome,
         title,
         amount: parseFloat(amount),
         date,
-        category: finalCategory,
+        source: finalSource,
       });
     } else {
-      onAddExpense({
+      onAddIncome({
         title,
         amount: parseFloat(amount),
         date,
-        category: finalCategory,
+        source: finalSource,
         id: Math.random(),
       });
     }
@@ -89,27 +87,27 @@ const ExpenseForm = ({
         />
       </div>
       <div className="flex flex-col gap-2">
-        <label htmlFor="category" className="font-medium text-blue-700">
-          Category
+        <label htmlFor="source" className="font-medium text-blue-700">
+          Source
         </label>
         <select
-          id="category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          id="source"
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
           className="border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
         >
-          {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
+          {sources.map((src) => (
+            <option key={src} value={src}>
+              {src}
             </option>
           ))}
         </select>
-        {category === "Other" && (
+        {source === "Other" && (
           <input
             type="text"
-            placeholder="Custom category"
-            value={customCategory}
-            onChange={(e) => setCustomCategory(e.target.value)}
+            placeholder="Custom source"
+            value={customSource}
+            onChange={(e) => setCustomSource(e.target.value)}
             className="border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white mt-2"
           />
         )}
@@ -133,12 +131,12 @@ const ExpenseForm = ({
         <button
           type="submit"
           className={`w-full px-4 py-2 rounded font-semibold ${
-            editingExpense ? "bg-blue-700" : "bg-blue-600"
+            editingIncome ? "bg-blue-700" : "bg-blue-600"
           } text-white hover:bg-blue-800 focus:outline-none`}
         >
-          {editingExpense ? "Update Expense" : "Add Expense"}
+          {editingIncome ? "Update Income" : "Add Income"}
         </button>
-        {editingExpense && (
+        {editingIncome && (
           <button
             type="button"
             onClick={onCancelEdit}
@@ -152,4 +150,4 @@ const ExpenseForm = ({
   );
 };
 
-export default ExpenseForm;
+export default IncomeForm;

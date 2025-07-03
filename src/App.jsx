@@ -1,39 +1,33 @@
-import React, { useState } from "react";
-import Header from "./components/Header";
-import ExpenseForm from "./components/ExpenseForm";
-import ExpenseList from "./components/ExpenseList";
+import { Routes, Route, Outlet } from "react-router-dom";
+import Sidebar from "./components/Sidebar";
+import Dashboard from "./components/Dashboard";
 
-const App = () => {
-  const [expenses, setExpenses] = useState([]);
+const Transactions = () => <div className="p-8">Transactions</div>;
+const Categories = () => <div className="p-8">Categories</div>;
+const Settings = () => <div className="p-8">Settings</div>;
 
-  const addExpense = (expense) => {
-    setExpenses((prevExpenses) => [expense, ...prevExpenses]);
-  };
-
-  const clearExpenses = () => {
-    setExpenses([]);
-  };
-
-  return (
-    <div>
-      <Header />
-      <ExpenseForm onAddExpense={addExpense} />
-      <ExpenseList expenses={expenses} />
-      <button onClick={clearExpenses} style={clearButtonStyle}>
-        Clear List
-      </button>
+const Layout = () => (
+  <div className="min-h-screen flex">
+    <Sidebar />
+    <div className="flex-1 ml-64 relative z-0">
+      <Outlet />
     </div>
-  );
-};
+  </div>
+);
 
-const clearButtonStyle = {
-  marginTop: "20px",
-  padding: "10px 20px",
-  backgroundColor: "#ff4d4d",
-  color: "white",
-  border: "none",
-  borderRadius: "5px",
-  cursor: "pointer",
-};
+const App = () => (
+  <Routes>
+    <Route path="/" element={<Layout />}>
+      <Route index element={<Dashboard />} />
+      <Route path="transactions" element={<Transactions />} />
+      <Route path="categories" element={<Categories />} />
+      <Route path="settings" element={<Settings />} />
+      <Route
+        path="*"
+        element={<div className="p-8">404 - Page Not Found</div>}
+      />
+    </Route>
+  </Routes>
+);
 
 export default App;
