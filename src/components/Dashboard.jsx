@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Header from "./Header";
 import ExpenseForm from "./ExpenseForm";
 import ExpenseList from "./ExpenseList";
 import IncomeForm from "./IncomeForm";
@@ -22,14 +21,17 @@ import {
   isWithinInterval,
 } from "date-fns";
 import PropTypes from "prop-types";
+import { useSettings } from "../contexts/SettingsContext";
 
-const pieData = [
-  { name: "Food", value: 400 },
-  { name: "Travel", value: 300 },
-  { name: "Utilities", value: 200 },
-  { name: "Shopping", value: 100 },
+const COLORS = [
+  "#2563eb",
+  "#60a5fa",
+  "#1e40af",
+  "#93c5fd",
+  "#3b82f6",
+  "#1d4ed8",
+  "#6366f1",
 ];
-const COLORS = ["#2563eb", "#60a5fa", "#1e40af", "#93c5fd"];
 
 const FILTERS = ["Today", "This Week", "This Month"];
 
@@ -40,11 +42,14 @@ const Dashboard = ({
   deleteIncome,
   updateExpense,
   deleteExpense,
-  currencySymbol = "$",
 }) => {
+  const { getCurrencySymbol, getFontSizeClass } = useSettings();
+  const currencySymbol = getCurrencySymbol();
+
   const [activeFilter, setActiveFilter] = useState("Today");
   const [editingIncome, setEditingIncome] = useState(null);
   const [editingExpense, setEditingExpense] = useState(null);
+
   const expenseCategories = [
     "Food",
     "Travel",
@@ -80,11 +85,7 @@ const Dashboard = ({
     (inc) => inc.date && isWithinInterval(new Date(inc.date), { start, end })
   );
 
-  // CRUD for incomes
-  const startEditIncome = (income) => setEditingIncome(income);
-  const cancelEditIncome = () => setEditingIncome(null);
-
-  // Example calculations for summary cards (replace with real logic as needed)
+  // Calculate summary data
   const totalIncome = filteredIncomes.reduce(
     (sum, inc) => sum + (inc.amount || 0),
     0
@@ -96,68 +97,125 @@ const Dashboard = ({
   const currentBalance = totalIncome - totalExpenses;
   const incomeSources = new Set(filteredIncomes.map((inc) => inc.source)).size;
 
+  // Generate pie chart data from actual expenses
+  const generatePieData = () => {
+    const categoryTotals = {};
+    filteredExpenses.forEach((expense) => {
+      const category = expense.category || "Other";
+      categoryTotals[category] =
+        (categoryTotals[category] || 0) + (expense.amount || 0);
+    });
+
+    return Object.entries(categoryTotals).map(([name, value]) => ({
+      name,
+      value,
+    }));
+  };
+
+  const pieData = generatePieData();
+
+  // CRUD handlers
+  const startEditIncome = (income) => setEditingIncome(income);
+  const cancelEditIncome = () => setEditingIncome(null);
   const startEditExpense = (expense) => setEditingExpense(expense);
   const cancelEditExpense = () => setEditingExpense(null);
 
   return (
-    <div className="min-h-screen flex bg-blue-200">
-      <main className="flex-1 flex flex-col items-center justify-start p-10 ml-64 w-full">
-        {/* Filter Bar */}
-        <div className="w-full max-w-3xl flex items-center justify-between mb-8">
+    <div className={`p-8 min-h-screen ${getFontSizeClass()}`}>
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+        <p className="text-gray-600">Track your income and expenses</p>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="flex items-center justify-between">
           <div className="flex gap-2">
             {FILTERS.map((filter) => (
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`px-4 py-2 rounded font-medium transition-colors duration-150 ${
+                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-150 ${
                   activeFilter === filter
-                    ? "bg-blue-700 text-white shadow"
-                    : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 {filter}
               </button>
             ))}
           </div>
-          {/* Placeholder for future menu items */}
-          <div className="flex gap-2">
-            {/* Add menu items here if needed */}
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-90">Total Income</p>
+              <p className="text-2xl font-bold">
+                {currencySymbol}
+                {totalIncome.toLocaleString()}
+              </p>
+            </div>
+            <div className="text-3xl opacity-80">💰</div>
           </div>
         </div>
-        {/* Summary Cards */}
-        <div className="w-full max-w-3xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-blue-600 text-white rounded-lg shadow p-6 flex flex-col items-center">
-            <span className="text-sm font-medium mb-2">Total Income</span>
-            <span className="text-2xl font-bold">
-              {currencySymbol}
-              {totalIncome.toLocaleString()}
-            </span>
-          </div>
-          <div className="bg-blue-100 text-blue-800 rounded-lg shadow p-6 flex flex-col items-center">
-            <span className="text-sm font-medium mb-2">Total Expenses</span>
-            <span className="text-2xl font-bold">
-              {currencySymbol}
-              {totalExpenses.toLocaleString()}
-            </span>
-          </div>
-          <div className="bg-blue-700 text-white rounded-lg shadow p-6 flex flex-col items-center">
-            <span className="text-sm font-medium mb-2">Current Balance</span>
-            <span className="text-2xl font-bold">
-              {currencySymbol}
-              {currentBalance.toLocaleString()}
-            </span>
-          </div>
-          <div className="bg-blue-50 text-blue-900 rounded-lg shadow p-6 flex flex-col items-center">
-            <span className="text-sm font-medium mb-2">Income Sources</span>
-            <span className="text-2xl font-bold">{incomeSources}</span>
+
+        <div className="bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-90">Total Expenses</p>
+              <p className="text-2xl font-bold">
+                {currencySymbol}
+                {totalExpenses.toLocaleString()}
+              </p>
+            </div>
+            <div className="text-3xl opacity-80">💸</div>
           </div>
         </div>
-        {/* Chart Section */}
-        <div className="w-full max-w-3xl bg-white shadow-lg rounded-lg p-8 mb-8">
-          <h2 className="text-xl font-bold text-blue-700 mb-4">
-            Expenses by Category
+
+        <div
+          className={`bg-gradient-to-r rounded-lg shadow-lg p-6 ${
+            currentBalance >= 0
+              ? "from-blue-500 to-blue-600 text-white"
+              : "from-orange-500 to-orange-600 text-white"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-90">Current Balance</p>
+              <p className="text-2xl font-bold">
+                {currencySymbol}
+                {currentBalance.toLocaleString()}
+              </p>
+            </div>
+            <div className="text-3xl opacity-80">
+              {currentBalance >= 0 ? "📈" : "📉"}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-90">Income Sources</p>
+              <p className="text-2xl font-bold">{incomeSources}</p>
+            </div>
+            <div className="text-3xl opacity-80">📊</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Chart Section */}
+      {pieData.length > 0 && (
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            Expenses by Category ({activeFilter})
           </h2>
-          <div className="w-full h-64">
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -168,7 +226,9 @@ const Dashboard = ({
                   cy="50%"
                   outerRadius={80}
                   fill="#2563eb"
-                  label
+                  label={({ name, percent }) =>
+                    `${name} ${(percent * 100).toFixed(0)}%`
+                  }
                 >
                   {pieData.map((entry, index) => (
                     <Cell
@@ -177,40 +237,51 @@ const Dashboard = ({
                     />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  formatter={(value) => [
+                    `${currencySymbol}${value.toLocaleString()}`,
+                    "Amount",
+                  ]}
+                />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="w-full max-w-3xl bg-white shadow-lg rounded-lg p-8">
-          <Header />
-          <div className="flex flex-col md:flex-row gap-6 mb-8">
-            <div className="flex-1">
-              <IncomeForm
-                editingIncome={editingIncome}
-                onUpdateIncome={updateIncome}
-                onCancelEdit={cancelEditIncome}
-              />
-            </div>
-            <div className="flex-1">
-              <ExpenseForm
-                editingExpense={editingExpense}
-                onUpdateExpense={updateExpense}
-                onCancelEdit={cancelEditExpense}
-                categories={expenseCategories}
-              />
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex-1">
+      )}
+
+      {/* Forms and Lists Section */}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Income Section */}
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Income</h3>
+            <IncomeForm
+              editingIncome={editingIncome}
+              onUpdateIncome={updateIncome}
+              onCancelEdit={cancelEditIncome}
+            />
+            <div className="mt-6">
               <IncomeList
                 incomes={filteredIncomes}
                 onEdit={startEditIncome}
                 onDelete={deleteIncome}
               />
             </div>
-            <div className="flex-1">
+          </div>
+
+          {/* Expense Section */}
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Expenses
+            </h3>
+            <ExpenseForm
+              editingExpense={editingExpense}
+              onUpdateExpense={updateExpense}
+              onCancelEdit={cancelEditExpense}
+              categories={expenseCategories}
+            />
+            <div className="mt-6">
               <ExpenseList
                 expenses={filteredExpenses}
                 onEdit={startEditExpense}
@@ -219,7 +290,7 @@ const Dashboard = ({
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
@@ -231,7 +302,6 @@ Dashboard.propTypes = {
   deleteIncome: PropTypes.func,
   updateExpense: PropTypes.func,
   deleteExpense: PropTypes.func,
-  currencySymbol: PropTypes.string,
 };
 
 export default Dashboard;
