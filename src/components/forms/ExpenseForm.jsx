@@ -1,8 +1,10 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable react/prop-types */
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import PropTypes from "prop-types";
+import { useSettings } from "../../contexts/SettingsContext";
+import { useCategories } from "../../contexts/CategoriesContext";
+import { CurrencySelector } from "../ui";
 
 const ExpenseForm = ({
   onAddExpense,
@@ -11,32 +13,42 @@ const ExpenseForm = ({
   onCancelEdit,
   categories = [],
 }) => {
+  const { getCurrencyCode } = useSettings();
+  const { getExpenseCategoryNames } = useCategories();
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date());
   const [category, setCategory] = useState(categories[0] || "");
   const [customCategory, setCustomCategory] = useState("");
+  const [currency, setCurrency] = useState(getCurrencyCode());
+
+  // Use categories from context if not provided as prop
+  const availableCategories =
+    categories.length > 0 ? categories : getExpenseCategoryNames();
 
   useEffect(() => {
     if (editingExpense) {
       setTitle(editingExpense.title || "");
       setAmount(editingExpense.amount || "");
       setDate(editingExpense.date ? new Date(editingExpense.date) : new Date());
-      setCategory(editingExpense.category || categories[0] || "");
+      setCategory(editingExpense.category || availableCategories[0] || "");
       setCustomCategory("");
+      setCurrency(editingExpense.currency || getCurrencyCode());
     } else {
       setTitle("");
       setAmount("");
       setDate(new Date());
-      setCategory(categories[0] || "");
+      setCategory(availableCategories[0] || "");
       setCustomCategory("");
+      setCurrency(getCurrencyCode());
     }
-  }, [editingExpense, categories]);
+  }, [editingExpense, availableCategories, getCurrencyCode]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const finalCategory =
       category === "Other" && customCategory ? customCategory : category;
+
     if (editingExpense) {
       onUpdateExpense({
         ...editingExpense,
@@ -44,6 +56,7 @@ const ExpenseForm = ({
         amount: parseFloat(amount),
         date,
         category: finalCategory,
+        currency,
       });
     } else {
       onAddExpense({
@@ -51,10 +64,10 @@ const ExpenseForm = ({
         amount: parseFloat(amount),
         date,
         category: finalCategory,
+        currency,
         id: Math.random(),
       });
     }
-    // Reset handled by useEffect
   };
 
   return (
@@ -75,19 +88,32 @@ const ExpenseForm = ({
           required
         />
       </div>
+
       <div className="flex flex-col gap-2">
         <label htmlFor="amount" className="font-medium text-blue-700">
           Amount
         </label>
-        <input
-          id="amount"
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className="border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-          required
-        />
+        <div className="flex space-x-3">
+          <input
+            id="amount"
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="flex-1 border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+            placeholder="0.00"
+            step="0.01"
+            min="0"
+            required
+          />
+          <CurrencySelector
+            value={currency}
+            onChange={setCurrency}
+            className="w-32"
+            size="md"
+          />
+        </div>
       </div>
+
       <div className="flex flex-col gap-2">
         <label htmlFor="category" className="font-medium text-blue-700">
           Category
@@ -98,7 +124,7 @@ const ExpenseForm = ({
           onChange={(e) => setCategory(e.target.value)}
           className="border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
         >
-          {categories.map((cat) => (
+          {availableCategories.map((cat) => (
             <option key={cat} value={cat}>
               {cat}
             </option>
@@ -114,6 +140,7 @@ const ExpenseForm = ({
           />
         )}
       </div>
+
       <div className="flex flex-col gap-2">
         <label htmlFor="date" className="font-medium text-blue-700">
           Date & Time
@@ -129,6 +156,7 @@ const ExpenseForm = ({
           className="border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
         />
       </div>
+
       <div className="flex gap-2 mt-4">
         <button
           type="submit"
@@ -150,6 +178,14 @@ const ExpenseForm = ({
       </div>
     </form>
   );
+};
+
+ExpenseForm.propTypes = {
+  onAddExpense: PropTypes.func,
+  editingExpense: PropTypes.object,
+  onUpdateExpense: PropTypes.func,
+  onCancelEdit: PropTypes.func,
+  categories: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default ExpenseForm;

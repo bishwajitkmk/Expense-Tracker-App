@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import PropTypes from "prop-types";
 
 const SettingsContext = createContext();
 
@@ -20,7 +21,8 @@ export const SettingsProvider = ({ children }) => {
     return {
       fontSize: "Medium",
       themeColor: "Blue",
-      currency: "USD ($)",
+      currency: "USD",
+      displayCurrency: "USD ($)",
       notifications: {
         email: true,
         push: false,
@@ -56,7 +58,7 @@ export const SettingsProvider = ({ children }) => {
     }));
   };
 
-  // Currency symbol mapping
+  // Legacy currency symbol mapping (for backward compatibility)
   const currencySymbols = {
     "USD ($)": "$",
     "EUR (€)": "€",
@@ -66,8 +68,14 @@ export const SettingsProvider = ({ children }) => {
     "BDT (৳)": "৳",
   };
 
+  // Get currency symbol (legacy support)
   const getCurrencySymbol = () => {
-    return currencySymbols[settings.currency] || "$";
+    return currencySymbols[settings.displayCurrency] || "$";
+  };
+
+  // Get current currency code
+  const getCurrencyCode = () => {
+    return settings.currency || "USD";
   };
 
   // Font size mapping
@@ -99,6 +107,7 @@ export const SettingsProvider = ({ children }) => {
     updateSettings,
     updateNestedSettings,
     getCurrencySymbol,
+    getCurrencyCode,
     getFontSizeClass,
     getThemeColorClass,
     currencySymbols,
@@ -111,4 +120,8 @@ export const SettingsProvider = ({ children }) => {
       {children}
     </SettingsContext.Provider>
   );
+};
+
+SettingsProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
